@@ -1,11 +1,13 @@
 package com.dg.musicexample.player;
 
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.dg.musicexample.model.PlayList;
 import com.dg.musicexample.model.Song;
+import com.dg.musicexample.utils.Logs;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,7 +18,7 @@ import java.util.List;
  * Skype: gianglong7695@gmail.com (id: gianglong7695_1)
  * Phone: 0979 579 283
  */
-public class Player implements IPlayback, MediaPlayer.OnCompletionListener {
+public class Player implements IPlayback, MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener {
 
     private static final String TAG = "Player";
 
@@ -35,6 +37,8 @@ public class Player implements IPlayback, MediaPlayer.OnCompletionListener {
         mPlayer = new MediaPlayer();
         mPlayList = new PlayList();
         mPlayer.setOnCompletionListener(this);
+        mPlayer.setOnPreparedListener(this);
+        mPlayer.setOnErrorListener(this);
     }
 
     public static Player getInstance() {
@@ -68,9 +72,14 @@ public class Player implements IPlayback, MediaPlayer.OnCompletionListener {
             try {
                 mPlayer.reset();
                 mPlayer.setDataSource(song.getPath());
-                mPlayer.prepare();
-                mPlayer.start();
+                mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                mPlayer.prepareAsync();
                 notifyPlayStatusChanged(true);
+
+                for (ICallback callback : mCallbacks) {
+                    callback.onSongUpdated(getPlayingSong());
+                }
+
             } catch (IOException e) {
                 Log.e(TAG, "play: ", e);
                 notifyPlayStatusChanged(false);
@@ -97,7 +106,11 @@ public class Player implements IPlayback, MediaPlayer.OnCompletionListener {
         isPaused = false;
         list.setPlayingIndex(startIndex);
         setPlayList(list);
+
+
         return play();
+
+
     }
 
     @Override
@@ -107,6 +120,8 @@ public class Player implements IPlayback, MediaPlayer.OnCompletionListener {
         isPaused = false;
         mPlayList.getSongs().clear();
         mPlayList.getSongs().add(song);
+
+
         return play();
     }
 
@@ -153,9 +168,17 @@ public class Player implements IPlayback, MediaPlayer.OnCompletionListener {
     }
 
     @Override
-    public int getProgress() {
+    public int getCurrentProgress() {
         return mPlayer.getCurrentPosition();
     }
+
+    @Override
+    public int getDuration() {
+        if (mPlayer != null && mPlayer.isPlaying())
+            return mPlayer.getDuration();
+        else return 0;
+    }
+
 
     @Nullable
     @Override
@@ -253,6 +276,21 @@ public class Player implements IPlayback, MediaPlayer.OnCompletionListener {
     private void notifyComplete(Song song) {
         for (ICallback callback : mCallbacks) {
             callback.onComplete(song);
+        }
+    }
+
+    @Override
+    public boolean onError(MediaPlayer mp, int what, int extra) {
+        Logs.e("Playback Error");
+        mp.reset();
+        return false;
+    }
+
+    @Override
+    public void onPrepared(MediaPlayer mp) {
+        mp.start();
+        for (ICallback callback : mCallbacks) {
+            callback.onPreparedPlayer();
         }
     }
 }

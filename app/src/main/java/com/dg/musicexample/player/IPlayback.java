@@ -1,5 +1,7 @@
 package com.dg.musicexample.player;
 
+import android.support.annotation.Nullable;
+
 import com.dg.musicexample.model.PlayList;
 import com.dg.musicexample.model.Song;
 
@@ -29,7 +31,9 @@ public interface IPlayback {
 
     boolean isPlaying();
 
-    int getProgress();
+    int getCurrentProgress();
+
+    int getDuration();
 
     Song getPlayingSong();
 
@@ -44,4 +48,19 @@ public interface IPlayback {
     void removeCallbacks();
 
     void releasePlayer();
+
+    interface ICallback {
+        void onSwitchLast(@Nullable Song last);
+
+        void onSwitchNext(@Nullable Song next);
+
+        void onComplete(@Nullable Song next);
+
+        void onPlayStatusChanged(boolean isPlaying);
+
+        void onPreparedPlayer();
+
+        void onSongUpdated(Song song);
+
+    }
 }

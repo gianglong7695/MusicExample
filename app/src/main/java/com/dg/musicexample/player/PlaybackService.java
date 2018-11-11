@@ -23,7 +23,7 @@ import com.dg.musicexample.utils.Constant;
  * Skype: gianglong7695@gmail.com (id: gianglong7695_1)
  * Phone: 0979 579 283
  */
-public class PlaybackService extends Service implements IPlayback, ICallback {
+public class PlaybackService extends Service implements IPlayback, IPlayback.ICallback {
     private static final int NOTIFICATION_ID = 1;
     private RemoteViews mContentViewBig, mContentViewSmall;
     private Player mPlayer;
@@ -133,9 +133,15 @@ public class PlaybackService extends Service implements IPlayback, ICallback {
     }
 
     @Override
-    public int getProgress() {
-        return mPlayer.getProgress();
+    public int getCurrentProgress() {
+        return mPlayer.getCurrentProgress();
     }
+
+    @Override
+    public int getDuration() {
+        return mPlayer.getDuration();
+    }
+
 
     @Override
     public Song getPlayingSong() {
@@ -193,6 +199,16 @@ public class PlaybackService extends Service implements IPlayback, ICallback {
     @Override
     public void onPlayStatusChanged(boolean isPlaying) {
         showNotification();
+
+    }
+
+    @Override
+    public void onPreparedPlayer() {
+
+    }
+
+    @Override
+    public void onSongUpdated(Song song) {
 
     }
 
@@ -257,13 +273,16 @@ public class PlaybackService extends Service implements IPlayback, ICallback {
         }
         remoteView.setImageViewResource(R.id.image_view_play_toggle, isPlaying()
                 ? R.drawable.ic_remote_view_pause : R.drawable.ic_remote_view_play);
-        Bitmap album = AlbumUtils.parseAlbum(getPlayingSong());
-        if (album == null) {
-            remoteView.setImageViewResource(R.id.image_view_album, R.mipmap.ic_launcher);
-        } else {
-            remoteView.setImageViewBitmap(R.id.image_view_album, album);
+        if(getPlayingSong().getAlbum() != null){
+            Bitmap album = AlbumUtils.parseAlbum(getPlayingSong());
+            if (album == null) {
+                remoteView.setImageViewResource(R.id.image_view_album, R.mipmap.ic_launcher);
+            } else {
+                remoteView.setImageViewBitmap(R.id.image_view_album, album);
 
+            }
         }
+
     }
 
     // PendingIntent
